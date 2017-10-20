@@ -85,7 +85,7 @@ class GPEmptyStringCheck(TargetCheck):
     """Non empty string check"""
     check_id = 'gp_empty_string'
     name = _('GP Rule(the source text is empty)')
-    description = _('Source text should not be an empty text')
+    description = _('GP Rule(the source text is empty)')
     severity = 'danger'
 
     def check_single(self, source, target, unit):
@@ -96,7 +96,7 @@ class GPInvalidStringCheck(TargetCheck):
     """Not gp special case check"""
     check_id = 'gp_invalid_source'
     name = _('GP Rule(the source text is invalid)')
-    description = _('Source text is invalid for GP')
+    description = _('GP Rule(the source text is invalid)')
     severity = 'danger'
     french_lowercase = string.ascii_lowercase + 'àâçèéêîôùû'
 
@@ -122,7 +122,7 @@ class GPUntranslatedTargetCheck(TargetCheck):
     """The target text is the same as source text"""
     check_id = 'gp_untranslated_translated'
     name = _('GP Rule(the target is the same as the source)')
-    description = _('Target text is the same as the source text')
+    description = _('GP Rule(the target is the same as the source)')
     severity = 'danger'
 
     def check_single(self, source, target, unit):
@@ -136,7 +136,7 @@ class GPLengthEquivalenceTargetCheck(TargetCheck):
     """The target text is not as long as the source text"""
     check_id = 'gp_length_equivalence'
     name = _('GP Rule(the source and the target differ in length)')
-    description = _('The source and target texts differ in length')
+    description = _('GP Rule(the source and the target differ in length)')
     severity = 'danger'
 
     def check_single(self, source, target, unit):
@@ -147,7 +147,7 @@ class GPValidArgsCheck(TargetCheck):
     """The consistency of arguments in text"""
     check_id = 'gp_arg_consistency'
     name = _('GP Rule(the source and the target differ in arguments)')
-    description = _('The source and target text do not have the same arguments')
+    description = _('GP Rule(the source and the target differ in arguments)')
     severity = 'danger'
 
     args_re = re.compile('\{(\d+)\}')
