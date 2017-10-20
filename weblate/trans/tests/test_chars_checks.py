@@ -33,6 +33,11 @@ from weblate.trans.checks.chars import (
     NewlineCountingCheck,
     ZeroWidthSpaceCheck,
     MaxLengthCheck,
+    GPEmptyStringCheck,
+    GPInvalidStringCheck,
+    GPUntranslatedTargetCheck,
+    GPLengthEquivalenceTargetCheck,
+    GPValidArgsCheck
 )
 from weblate.trans.tests.test_checks import CheckTestCase, MockUnit
 
@@ -83,6 +88,53 @@ class EndSpaceCheckTest(CheckTestCase):
     def test_french(self):
         self.do_test(False, ('Text!', 'Texte !', ''), 'fr')
         self.do_test(True, ('Text', 'Texte ', ''), 'fr')
+
+
+class GPEmptyStringCheckTest(CheckTestCase):
+    check = GPEmptyStringCheck()
+
+    def setUp(self):
+        super(GPEmptyStringCheckTest, self).setUp()
+        self.test_empty = None
+        self.test_good_matching = ('string  ', 'string  ', '')
+        self.test_failure_1 = ('', 'string ', '')
+
+
+class GPInvalidStringCheckTest(CheckTestCase):
+    check = GPInvalidStringCheck()
+
+    def setUp(self):
+        super(GPInvalidStringCheckTest, self).setUp()
+        self.test_good_matching = ('bonjour ', 'hello   ', '')
+        self.test_failure_1 = ('<<bonjour ', '<<hello   ', '')
+
+
+class GPUntranslatedTargetCheckTest(CheckTestCase):
+    check = GPUntranslatedTargetCheck()
+
+    def setUp(self):
+        super(GPUntranslatedTargetCheckTest, self).setUp()
+        self.test_good_none = None
+        self.test_good_matching = ('bonjour ', 'hello   ', '')
+        self.test_failure_1 = ('bonjour ', 'bonjour ', '')
+
+
+class GPLengthEquivalenceTargetCheckTest(CheckTestCase):
+    check = GPLengthEquivalenceTargetCheck()
+
+    def setUp(self):
+        super(GPLengthEquivalenceTargetCheckTest, self).setUp()
+        self.test_good_matching = ('bonjour ', 'hello   ', '')
+        self.test_failure_1 = ('bonjour ', 'hello', '')
+
+
+class GPValidArgsCheckTest(CheckTestCase):
+    check = GPValidArgsCheck()
+
+    def setUp(self):
+        super(GPValidArgsCheckTest, self).setUp()
+        self.test_good_matching = ('bonjour {1}', 'hello   {1}', '')
+        self.test_failure_1 = ('bonjour{1}', 'hello     ', '')
 
 
 class EndStopCheckTest(CheckTestCase):

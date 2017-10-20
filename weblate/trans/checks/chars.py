@@ -21,6 +21,7 @@
 from __future__ import unicode_literals
 
 import re
+import string
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -80,6 +81,86 @@ class BeginSpaceCheck(TargetCheck):
         return source_space != target_space
 
 
+class GPEmptyStringCheck(TargetCheck):
+    """Non empty string check"""
+    check_id = 'gp_empty_string'
+    name = _('GP Rule(the source text is empty)')
+    description = _('Source text should not be an empty text')
+    severity = 'danger'
+
+    def check_single(self, source, target, unit):
+        return not source
+
+
+class GPInvalidStringCheck(TargetCheck):
+    """Not gp special case check"""
+    check_id = 'gp_invalid_source'
+    name = _('GP Rule(the source text is invalid)')
+    description = _('Source text is invalid for GP')
+    severity = 'danger'
+    french_lowercase = string.ascii_lowercase + 'àâçèéêîôùû'
+
+    def is_source_valid(self, source):
+        if len(source) < 2:
+            return False
+        for prefix in ('<<', 'Branch#', '>>> '):
+            if source.startswith(prefix):
+                return False
+        for c in source.lower():
+            if c in self.french_lowercase:
+                return True
+        return False
+
+    def check_single(self, source, target, unit):
+        if source:
+            return not self.is_source_valid(source)
+        else:
+            return False
+
+
+class GPUntranslatedTargetCheck(TargetCheck):
+    """The target text is the same as source text"""
+    check_id = 'gp_untranslated_translated'
+    name = _('GP Rule(the target is the same as the source)')
+    description = _('Target text is the same as the source text')
+    severity = 'danger'
+
+    def check_single(self, source, target, unit):
+        if source:
+            return source == target
+        else:
+            return False
+
+
+class GPLengthEquivalenceTargetCheck(TargetCheck):
+    """The target text is not as long as the source text"""
+    check_id = 'gp_length_equivalence'
+    name = _('GP Rule(the source and the target differ in length)')
+    description = _('The source and target texts differ in length')
+    severity = 'danger'
+
+    def check_single(self, source, target, unit):
+        return len(source) != len(target)
+
+
+class GPValidArgsCheck(TargetCheck):
+    """The consistency of arguments in text"""
+    check_id = 'gp_arg_consistency'
+    name = _('GP Rule(the source and the target differ in arguments)')
+    description = _('The source and target text do not have the same arguments')
+    severity = 'danger'
+
+    args_re = re.compile('\{(\d+)\}')
+
+    def has_valid_args(self, source, target):
+        source_args = sorted(self.args_re.findall(source))
+        target_args = sorted(self.args_re.findall(target))
+        return source_args == target_args
+
+    def check_single(self, source, target, unit):
+        return not self.has_valid_args(source, target)
+
+
 class EndSpaceCheck(TargetCheck):
     """Whitespace check"""
     check_id = 'end_space'
@@ -94,7 +175,7 @@ class EndSpaceCheck(TargetCheck):
         if not source or not target:
             return False
         if (self.is_language(unit, ('fr', 'br')) and
-                source[-1] in [':', '!', '?'] and target[-1] == ' '):
+                    source[-1] in [':', '!', '?'] and target[-1] == ' '):
             return False
 
         stripped_target = target.rstrip(' ')
@@ -126,18 +207,18 @@ class EndStopCheck(TargetCheck):
         if not target:
             return False
         # Thai does not have a full stop
-        if self.is_language(unit, ('th', )):
+        if self.is_language(unit, ('th',)):
             return False
         # Allow ... to be translated into ellipsis
         if source.endswith('...') and target[-1] == '…':
             return False
-        if self.is_language(unit, ('ja', )) and source[-1] in (':', ';'):
+        if self.is_language(unit, ('ja',)) and source[-1] in (':', ';'):
             # Japanese sentence might need to end with full stop
             # in case it's used before list.
             return self.check_chars(
                 source, target, -1, (';', ':', '：', '.', '。')
             )
-        if self.is_language(unit, ('hy', )):
+        if self.is_language(unit, ('hy',)):
             return self.check_chars(
                 source, target, -1,
                 (
@@ -205,9 +286,9 @@ class EndColonCheck(TargetCheck):
             return False
         if self.is_language(unit, ('fr', 'br')):
             return self._check_fr(source, target)
-        if self.is_language(unit, ('hy', )):
+        if self.is_language(unit, ('hy',)):
             return self._check_hy(source, target)
-        if self.is_language(unit, ('ja', )):
+        if self.is_language(unit, ('ja',)):
             return self._check_ja(source, target)
         return self.check_chars(source, target, -1, (':', '：', '៖'))
 
@@ -254,9 +335,9 @@ class EndQuestionCheck(TargetCheck):
             return False
         if self.is_language(unit, ('fr', 'br')):
             return self._check_fr(source, target)
-        if self.is_language(unit, ('hy', )):
+        if self.is_language(unit, ('hy',)):
             return self._check_hy(source, target)
-        if self.is_language(unit, ('el', )):
+        if self.is_language(unit, ('el',)):
             return self._check_el(source, target)
 
         return self.check_chars(
@@ -291,10 +372,10 @@ class EndExclamationCheck(TargetCheck):
     def check_single(self, source, target, unit):
         if not source or not target:
             return False
-        if (self.is_language(unit, ('eu', )) and source[-1] == '!' and
-                '¡' in target and '!' in target):
+        if (self.is_language(unit, ('eu',)) and source[-1] == '!' and
+                    '¡' in target and '!' in target):
             return False
-        if self.is_language(unit, ('hy', )):
+        if self.is_language(unit, ('hy',)):
             return False
         if self.is_language(unit, ('fr', 'br')):
             return self._check_fr(source, target)
@@ -321,7 +402,7 @@ class EndEllipsisCheck(TargetCheck):
         # Allow ... to be translated into ellipsis
         if source.endswith('...') and target[-1] == '…':
             return False
-        return self.check_chars(source, target, -1, ('…', ))
+        return self.check_chars(source, target, -1, ('…',))
 
 
 class NewlineCountingCheck(CountingCheck):
@@ -341,7 +422,7 @@ class ZeroWidthSpaceCheck(TargetCheck):
     severity = 'warning'
 
     def check_single(self, source, target, unit):
-        if self.is_language(unit, ('km', )):
+        if self.is_language(unit, ('km',)):
             return False
         return ('\u200b' in target) != ('\u200b' in source)
 
@@ -375,7 +456,7 @@ class EndSemicolonCheck(TargetCheck):
     severity = 'warning'
 
     def check_single(self, source, target, unit):
-        if self.is_language(unit, ('el', )) and source[-1] == '?':
+        if self.is_language(unit, ('el',)) and source[-1] == '?':
             # Complement to question mark check
             return False
         return self.check_chars(source, target, -1, [';'])
